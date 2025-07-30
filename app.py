@@ -6,6 +6,10 @@ app = Flask(__name__)
 def home():
     return send_from_directory('templates', 'index.html')
 
+@app.route("/upload-page")
+def upload_page():
+    return send_from_directory("templates", "upload.html")
+
 @app.route("/upload", methods=["POST", "OPTIONS"])
 def upload():
     # ✅ Handle the preflight request
