@@ -1,7 +1,10 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_from_directory
 import os
 
 app = Flask(__name__)
+@app.route('/')
+def home():
+    return send_from_directory('templates', 'index.html')
 
 @app.route("/upload", methods=["POST", "OPTIONS"])
 def upload():
