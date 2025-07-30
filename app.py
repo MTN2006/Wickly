@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return send_from_directory('templates', 'index.html')
+    return render_template('index.html')
 
 @app.route("/upload-page")
 def upload_page():
