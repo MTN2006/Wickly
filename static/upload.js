@@ -31,7 +31,7 @@ fileInput.addEventListener("change", async () => {
   formData.append('image', file);
 
   // ASYNC/POST sending the file to flask backend
-  const response = await fetch("http://localhost:5000/upload", {
+  const response = await fetch("https://wickly.onrender.com/upload", {
     method: "POST",
     body: formData,
   });
