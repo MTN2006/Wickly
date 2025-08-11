@@ -1,7 +1,24 @@
 from flask import Flask, request, jsonify, make_response, send_from_directory, render_template
 import os
-
+from fastai.vision.all import load_learner
+from werkzeug.utils import secure_filename
+from pathlib import Path
 app = Flask(__name__)
+
+# Load the model
+model_path = Path("hammer_model_best.pkl")
+upload_dir = Path("uploads")
+upload_dir.mkdir(exist_ok=True)
+
+learn = load_learner(model_path)  # Load ONCE at startup
+VOCAB = list(learn.dls.vocab)  # e.g. ['hammer', 'none']
+
+def predict_argmax(img_path: Path):
+    # MultiCategory: use argmax to force one final label
+    pred, _, probs = learn.predict(img_path)
+    top_idx = int(probs.argmax())
+    return VOCAB[top_idx], {VOCAB[i]: float(probs[i]) for i in range(len(VOCAB))}
+
 
 @app.route('/')
 def home():
