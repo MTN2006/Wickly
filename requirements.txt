@@ -3,6 +3,9 @@
 
 torch==2.5.1+cpu
 torchvision==0.20.1+cpu
-torchaudio==2.5.1+cpu
-fastai==2.7.17
+
+fastai>=2.7.17
+numpy>=1.26
+pillow>=9
 flask==3.0.3
+gunicorn==21.2.0
