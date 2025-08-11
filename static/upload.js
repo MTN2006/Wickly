@@ -39,6 +39,9 @@ fileInput.addEventListener("change", async () => {
   const data = await response.json();
   if (response.ok){
     console.log("Good", data.message);
+    console.log("Prediction: ", data.prediction);
+    console.log("Probabilities: ", data.probabilites);
+    result.textContent = `Prediction: ${data.prediction} | ${JSON.stringify(data.probabilities)}`;
   } else {
     console.log("Bad", data.message);
   }
