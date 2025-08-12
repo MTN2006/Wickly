@@ -72,7 +72,6 @@ def upload():
 
     # Respond
     response = jsonify({
-        "message": f"✅ Received image: {fname}",
         "prediction": label,
         "probabilities": probs
     })
