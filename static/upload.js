@@ -35,21 +35,20 @@ fileInput.addEventListener("change", async () => {
   console.log('probs raw:', data.probabilities);
   
   if (response.ok) {
-    // Make sure it's visible
-    result.classList.remove('hidden');
-    result.style.display = 'block';
-    result.style.whiteSpace = 'pre-wrap';
+  result.classList.remove('hidden');
+  result.style.display = 'block';
+  result.style.whiteSpace = 'pre-wrap';
 
-    // Format probabilities
-    const probsPercent = Object.entries(data.probabilities || {})
-      .map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`)
-      .join('\n');
+  // Only show probability of the predicted label
+  const predLabel = data.prediction;
+  const predProb = data.probabilities?.[predLabel] ?? null;
 
-    // Show prediction in bold, percentages below
-    result.innerHTML = `<strong>Prediction:</strong> ${data.prediction}<br><br>${probsPercent}`;
+  if (predProb !== null) {
+    const percent = (predProb * 100).toFixed(1) + "%";
+    result.innerHTML = `<strong>Prediction:</strong> ${predLabel} (${percent} confident)`;
   } else {
-    result.classList.remove('hidden');
-    result.style.display = 'block';
-    result.innerText = data.message || 'Upload failed';
+    result.innerHTML = `<strong>Prediction:</strong> ${predLabel}`;
   }
-});
+}
+  }
+);
