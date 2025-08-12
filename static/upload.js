@@ -50,6 +50,7 @@ fileInput.addEventListener("change", async () => {
     }
 
     result.textContent = `Prediction: ${data.prediction} | ${JSON.stringify(probsPercent)}`;
+    result.classList.remove('hidden');
 
 
 
