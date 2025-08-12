@@ -37,13 +37,26 @@ fileInput.addEventListener("change", async () => {
   });
 
   const data = await response.json();
+  console.log('data keys:', Object.keys(data));
+  console.log('probs raw:', data.probabilities);
+  
   if (response.ok){
     console.log("Good", data.message);
     console.log("Prediction: ", data.prediction);
-    console.log("Probabilities: ", data.probabilites);
-    result.textContent = `Prediction: ${data.prediction} | ${JSON.stringify(data.probabilities)}`;
+    console.log("Probabilities: ", data.probabilities);
+    const probsPercent = {};
+    for (const [label, value] of Object.entries(data.probabilities)) {
+        probsPercent[label] = (value * 100).toFixed(1) + "%";
+    }
+
+    result.textContent = `Prediction: ${data.prediction} | ${JSON.stringify(probsPercent)}`;
+
+
+
   } else {
     console.log("Bad", data.message);
   }
   result.textContent = data.message;
 });
+
+
