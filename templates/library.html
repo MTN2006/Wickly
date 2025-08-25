@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wickly | Pattern Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="dark" />
+</head>
+<body class="min-h-screen bg-gradient-to-r from-zinc-400 to-blue-700 text-slate-100">
+  <main class="max-w-7xl mx-auto p-6">
+    <!-- Title -->
+    <section class="text-center mb-12">
+      <div class="flex items-center justify-center gap-3 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-900/40">📚</div>
+        <h1 class="text-4xl font-bold text-indigo-950">Pattern Library</h1>
+      </div>
+      <p class="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+        Master candlestick patterns with detailed descriptions and actionable trading strategies.
+      </p>
+    </section>
+
+    <!-- Search + Filters -->
+    <section class="mb-8 space-y-4">
+      <div class="relative max-w-md mx-auto">
+        <input id="pattern-search" type="text" placeholder="Search patterns..."
+               class="w-full pl-4 pr-4 py-3 text-base md:text-lg rounded-xl bg-black/40
+                      border border-white/10 text-slate-100 placeholder:text-slate-400
+                      backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/60" />
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-3" id="filters">
+        <button data-filter="all"
+                class="filter-btn rounded-xl px-5 py-2.5 font-semibold border
+                       bg-gradient-to-r from-indigo-600 to-blue-600 text-white
+                       border-transparent shadow-lg shadow-indigo-900/40">
+          All Patterns (<span id="count-all">0</span>)
+        </button>
+        <button data-filter="bullish"
+                class="filter-btn rounded-xl px-5 py-2.5 font-semibold border
+                       text-slate-200 border-white/10 hover:border-white/20 hover:bg-white/5">
+          Bullish (<span id="count-bullish">0</span>)
+        </button>
+        <button data-filter="bearish"
+                class="filter-btn rounded-xl px-5 py-2.5 font-semibold border
+                       text-slate-200 border-white/10 hover:border-white/20 hover:bg-white/5">
+          Bearish (<span id="count-bearish">0</span>)
+        </button>
+      </div>
+    </section>
+
+    <!-- Showing Count -->
+    <section class="text-center mb-8">
+      <div class="inline-flex items-center bg-white/5 backdrop-blur-sm border border-white/10
+                  text-slate-300 px-4 py-2 text-sm rounded-full">
+        <span class="mr-2">🔎</span>
+        Showing <span id="showing-count" class="mx-1 font-semibold text-slate-100">0</span> patterns
+      </div>
+    </section>
+
+    <!-- Grid + No results -->
+    <section id="patterns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></section>
+
+    <section id="no-results" class="hidden text-center py-16">
+      <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">🔍</div>
+      <h3 class="text-2xl font-bold mb-2">No patterns found</h3>
+      <p class="text-slate-300 max-w-md mx-auto">Try adjusting your search terms or filters to find the patterns you're looking for.</p>
+    </section>
+  </main>
+
+  <!-- All the logic here -->
+  <script>
+    const PATTERN_LIBRARY = [
+  { name: "Hammer", type: "bullish", description: "A small real body near the top of the candle with a long lower shadow, indicating that sellers pushed the price down but buyers regained control.", action: "Consider buying if the next candle confirms upward momentum." },
+  { name: "Shooting Star", type: "bearish", description: "A small body with a long upper shadow after an uptrend, showing rejection of higher prices.", action: "Look for bearish confirmation to short." },
+  { name: "Inverted Hammer", type: "bullish", description: "A small real body with a long upper shadow after a downtrend, showing early signs of potential reversal.", action: "Wait for a bullish confirmation before entering." },
+  { name: "Hanging Man", type: "bearish", description: "A small body with a long lower shadow after an uptrend, signaling weakening bullish momentum.", action: "Sell if the next candle confirms downward movement." },
+  { name: "Bullish Engulfing", type: "bullish", description: "A large bullish candle completely engulfs the previous bearish candle, signaling strong buying pressure.", action: "Look for upward continuation." },
+  { name: "Bearish Engulfing", type: "bearish", description: "A large bearish candle completely engulfs the previous bullish candle, showing strong selling pressure.", action: "Initiate short positions on confirmation." },
+  { name: "Piercing Line", type: "bullish", description: "After a downtrend, a bullish candle closes above the midpoint of the previous bearish candle, indicating a reversal.", action: "Enter long positions once confirmed." },
+  { name: "Dark Cloud Cover", type: "bearish", description: "After an uptrend, a bearish candle closes below the midpoint of the prior bullish candle.", action: "Reduce long exposure or consider shorting." },
+  { name: "Morning Star", type: "bullish", description: "Three-candle pattern signaling reversal: a bearish candle, a small-bodied candle, and a strong bullish candle closing above the midpoint of the first.", action: "Enter long positions after confirmation." },
+  { name: "Evening Star", type: "bearish", description: "Three-candle reversal: a bullish candle, a small-bodied candle, then a strong bearish candle closing below the midpoint of the first.", action: "Exit longs; consider shorts." },
+  { name: "Morning Doji Star", type: "bullish", description: "Similar to the Morning Star but with a doji in the middle, showing stronger indecision before a reversal.", action: "Go long if a bullish confirmation follows." },
+  { name: "Evening Doji Star", type: "bearish", description: "Similar to the Evening Star but with a doji in the middle, signaling strong reversal potential.", action: "Short positions become favorable on confirmation." },
+  { name: "Three White Soldiers", type: "bullish", description: "Three consecutive strong bullish candles with higher closes, indicating sustained upward momentum.", action: "Continue or initiate long positions." },
+  { name: "Upside Gap Two Crows", type: "bearish", description: "A gap up during an uptrend followed by two bearish candles, indicating exhaustion of buyers.", action: "Watch for further downside and initiate shorts if confirmed." },
+  { name: "Bullish Harami", type: "bullish", description: "A small bullish candle completely contained within the prior bearish candle, suggesting a slowdown in selling.", action: "Enter long on breakout above the pattern." },
+  { name: "Bearish Harami", type: "bearish", description: "A small bearish candle contained within the previous bullish candle, signaling slowing bullish momentum.", action: "Short if price breaks below the pattern." },
+  { name: "Bullish Harami Cross", type: "bullish", description: "Similar to Bullish Harami but with a doji inside, indicating stronger indecision before a potential reversal.", action: "Wait for clear confirmation before entering." },
+  { name: "Bearish Meeting Lines", type: "bearish", description: "A bearish candle closes near the same level as a previous bullish candle after a gap, signaling a stall in momentum.", action: "Consider defensive or short positions." },
+  { name: "Tweezer Bottom", type: "bullish", description: "Two candles with similar lows, showing strong support at that level.", action: "Consider entering long near support." },
+  { name: "Bearish Counterattack", type: "bearish", description: "After a gap up, a strong bearish candle closes near the previous bullish close, flipping sentiment.", action: "Short on follow-through." },
+  { name: "Bullish Tasuki Gap", type: "bullish", description: "A gap up followed by a small bearish candle that does not fill the gap, signaling continuation upward.", action: "Maintain or add to long positions." },
+  { name: "On neck line", type: "bearish", description: "After a long bearish candle, a small bullish candle closes near the prior low but fails to break higher.", action: "Look for continuation downward." },
+  { name: "Side-by-Side White Lines (Bullish)", type: "bullish", description: "Two or more bullish candles side by side after a gap up, confirming bullish strength.", action: "Continue riding the uptrend." },
+  { name: "Bearish Tasuki Gap", type: "bearish", description: "A gap down followed by a small bullish candle that does not close the gap, signaling bearish continuation.", action: "Stay short or add to positions." },
+  { name: "Dragonfly Doji", type: "bullish", description: "A doji with a long lower shadow formed after a downtrend, indicating buyers regained control.", action: "Enter long on a break above the high." },
+  { name: "Bearish Advance Block", type: "bearish", description: "A weakening uptrend shown by three candles with diminishing strength.", action: "Prepare for reversal; consider short entries." },
+  { name: "Three Inside Up", type: "bullish", description: "A bullish harami pattern followed by a bullish candle closing above the prior highs.", action: "Go long when the third candle confirms the reversal." },
+  { name: "Tristar", type: "bearish", description: "Three consecutive doji candles after an uptrend, signaling strong indecision and potential reversal.", action: "Short once a downward confirmation candle appears." },
+  { name: "Bullish Abandoned Baby", type: "bullish", description: "A gap down doji followed by a gap up, leaving the doji isolated; a strong reversal signal.", action: "Enter long positions after confirmation." },
+  { name: "Stall Pattern", type: "bearish", description: "Uptrend loses momentum with smaller candles, hinting at a reversal.", action: "Tighten stops or look for short setups." }
+];
+
+    let currentFilter = 'all';
+    let filtered = [...PATTERN_LIBRARY];
+
+    const searchInput   = document.getElementById('pattern-search');
+    const grid          = document.getElementById('patterns-grid');
+    const noResults     = document.getElementById('no-results');
+    const showingCount  = document.getElementById('showing-count');
+    const countsEls = {
+      all: document.getElementById('count-all'),
+      bullish: document.getElementById('count-bullish'),
+      bearish: document.getElementById('count-bearish')
+    };
+
+    updateCounts();
+    applySearchAndFilter();
+
+    searchInput.addEventListener('input', applySearchAndFilter);
+    document.getElementById('filters').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-filter]');
+      if (!btn) return;
+      currentFilter = btn.getAttribute('data-filter');
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.classList.remove('bg-gradient-to-r','from-indigo-600','to-blue-600','text-white','border-transparent','shadow-lg','shadow-indigo-900/40');
+        b.classList.add('text-slate-200','border-white/10');
+      });
+      btn.classList.add('bg-gradient-to-r','from-indigo-600','to-blue-600','text-white','border-transparent','shadow-lg','shadow-indigo-900/40');
+      applySearchAndFilter();
+    });
+
+    function applySearchAndFilter(){
+      const q = searchInput.value.trim().toLowerCase();
+      filtered = PATTERN_LIBRARY.filter(p => {
+        const matchesFilter = currentFilter === 'all' || p.type === currentFilter;
+        if(!matchesFilter) return false;
+        if(q === '') return true;
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.action.toLowerCase().includes(q)
+        );
+      });
+      renderGrid();
+      showingCount.textContent = filtered.length;
+    }
+
+    function updateCounts(){
+      const counts = PATTERN_LIBRARY.reduce((acc, p) => {
+        acc.all++; acc[p.type]++;
+        return acc;
+      }, {all:0, bullish:0, bearish:0});
+      countsEls.all.textContent = counts.all;
+      countsEls.bullish.textContent = counts.bullish;
+      countsEls.bearish.textContent = counts.bearish;
+    }
+
+    function renderGrid(){
+      if (filtered.length === 0){
+        grid.innerHTML = '';
+        grid.classList.add('hidden');
+        noResults.classList.remove('hidden');
+        return;
+      }
+      grid.classList.remove('hidden');
+      noResults.classList.add('hidden');
+      grid.innerHTML = filtered.map(renderCard).join('');
+    }
+
+    function renderCard(p){
+      const cardGradient = p.type === 'bullish'
+        ? 'bg-gradient-to-r from-black to-green-900'
+        : 'bg-gradient-to-r from-black to-red-900';
+
+      return `
+        <article class="h-full rounded-3xl p-6 border border-white/10
+                        ${cardGradient}
+                        transition-all duration-300 hover:-translate-y-1
+                        hover:shadow-xl hover:shadow-black/40">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-slate-100">${p.name}</h3>
+            <div class="text-xl ${p.type === 'bullish' ? 'text-green-400' : 'text-red-400'}">
+              ${p.type === 'bullish' ? '↑' : '↓'}
+            </div>
+          </div>
+          <div class="mb-4">
+            <span class="inline-block px-3 py-1 text-xs font-semibold border border-white/10 rounded-full
+                         ${p.type === 'bullish' ? 'text-green-300' : 'text-red-300'}">
+              ${p.type} pattern
+            </span>
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed mb-4">${p.description}</p>
+          <div class="space-y-2">
+            <div class="text-xs font-medium text-slate-400">TYPICAL ACTION:</div>
+            <div class="text-sm font-semibold text-slate-100">${p.action}</div>
+          </div>
+        </article>
+      `;
+    }
+  </script>
+</body>
+</html>
