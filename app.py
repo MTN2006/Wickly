@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 app.logger.setLevel(logging.INFO)
 
 # ---- model + uploads ----
-model_path = Path("hammer_model_V04.pkl")
+model_path = Path("candlestick_model_V04.pkl")
 upload_dir = Path("uploads")
 upload_dir.mkdir(exist_ok=True)
 
