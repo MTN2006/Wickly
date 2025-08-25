@@ -37,6 +37,10 @@ def home():
 def upload_page():
     return render_template('upload.html')
 
+@app.route('/library')
+def library():
+    return render_template('library.html')
+
 @app.route('/health')
 def health():
     return jsonify({"ok": True, "vocab": VOCAB})
