@@ -4,6 +4,10 @@ from fastai.vision.all import load_learner
 from werkzeug.utils import secure_filename
 from pathlib import Path
 import logging
+from PIL import Image, ImageOps
+from werkzeug.utils import secure_filename
+from pathlib import Path
+import io, os, uuid
 
 app = Flask(__name__)
 
@@ -33,6 +37,10 @@ def predict_argmax(img_path: Path):
 def home():
     return render_template('index.html')
 
+@app.route('/home')
+def home():
+    return render_template('index.html')
+
 @app.route('/upload-page')
 def upload_page():
     return render_template('upload.html')
@@ -44,6 +52,8 @@ def library():
 @app.route('/health')
 def health():
     return jsonify({"ok": True, "vocab": VOCAB})
+
+TARGET_SIZE = (224, 224)  # <-- set to your model’s input size (change if needed)
 
 @app.route('/upload', methods=['POST', 'OPTIONS'])
 def upload():
@@ -64,17 +74,48 @@ def upload():
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 400
 
-    # Save the file
-    fname = secure_filename(image.filename or 'upload.png')
-    save_path = upload_dir / fname
-    image.save(save_path)
-    app.logger.info(f"saved to {save_path}")
+    # ---- NORMALIZE THE IMAGE (fixes phone photos / HEIC / EXIF / RGBA) ----
+    # 1) Sanitize original name for logs only (we'll save as PNG after normalization)
+    orig_name = secure_filename(image.filename or f"upload_{uuid.uuid4().hex}")
 
-    # Run prediction
-    label, probs = predict_argmax(save_path)
-    app.logger.info(f"prediction={label}, probs={probs}")
+    try:
+        # 2) Open from stream (HEIC works if pillow-heif is available)
+        pil = Image.open(image.stream)
 
-    # Respond
+        # 3) Fix rotation using EXIF
+        pil = ImageOps.exif_transpose(pil)
+
+        # 4) Force 3-channel RGB (avoids RGBA/LA/grayscale issues)
+        pil = pil.convert("RGB")
+
+        # 5) Resize to model’s expected size (adjust if your model resizes internally)
+        if TARGET_SIZE:
+            pil = pil.resize(TARGET_SIZE, Image.BILINEAR)
+
+        # 6) Save as clean PNG to disk (uniform format the model can read)
+        stem = Path(orig_name).stem
+        norm_path = upload_dir / f"{stem}_{uuid.uuid4().hex}.png"
+        pil.save(norm_path, format="PNG", optimize=True)
+
+        app.logger.info(f"normalized and saved to {norm_path}")
+
+    except Exception as e:
+        app.logger.exception("Image normalization failed")
+        response = jsonify({"message": f"❌ Image processing error: {str(e)}"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 400
+
+    # ---- PREDICT ----
+    try:
+        label, probs = predict_argmax(norm_path)  # your existing API
+        app.logger.info(f"prediction={label}, probs={probs}")
+    except Exception as e:
+        app.logger.exception("Prediction failed")
+        response = jsonify({"message": f"❌ Prediction error: {str(e)}"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response, 500
+
+    # ---- RESPOND ----
     response = jsonify({
         "prediction": label,
         "probabilities": probs

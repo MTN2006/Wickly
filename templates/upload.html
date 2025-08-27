@@ -7,6 +7,25 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-r from-gray-300 to-blue-700 text-white min-h-screen flex items-center justify-center px-4 py-16">
+  
+  <!-- NavBar -->
+<header class="bg-gray-900 text-white shadow-md fixed top-0 left-0 w-full z-50">
+  <div class="w-full flex flex-row justify-between items-center px-6 py-4">
+    <!-- Logo -->
+    <a href="#" class="text-2xl font-bold text-indigo-400 animate-pulse whitespace-nowrap">
+      Wickly
+    </a>
+
+    <!-- Navbar -->
+    <nav class="flex space-x-6 text-sm md:text-base">
+      <a href="{{ url_for('home') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Home</a>
+      <a href="{{ url_for('library') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Upload</a>
+    </nav>
+  </div>
+</header>
+
+
+
 
   <div class="bg-gradient-to-r from-purple-300 to-blue-900 p-10 rounded-2xl shadow-xl w-full max-w-2xl text-center">
     <h1 class="text-4xl font-bold text-cyan-400 mb-6">Upload Your Candlestick Chart</h1>
