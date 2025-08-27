@@ -9,3 +9,4 @@ numpy>=1.26
 pillow>=9
 flask==3.0.3
 gunicorn==21.2.0
+pillow-heif

@@ -1,19 +1,25 @@
-from flask import Flask, request, jsonify, make_response, render_template
 import os
-from fastai.vision.all import load_learner
-from werkzeug.utils import secure_filename
-from pathlib import Path
 import logging
-from PIL import Image, ImageOps
-from werkzeug.utils import secure_filename
 from pathlib import Path
-import io, os, uuid
-# pip install fastai pillow pillow-heif
-from fastai.vision.all import *
-from io import BytesIO
-import pillow_heif  # enables HEIC/HEIF via PIL
-pillow_heif.register_heif_opener()
 
+from flask import Flask, request, jsonify, make_response, render_template
+from PIL import Image, ImageOps
+
+# fastai (only import what you use)
+from fastai.vision.all import load_learner
+
+# ---- Optional HEIC support (won't crash if missing) ----
+HEIC_ENABLED = False
+try:
+    import pillow_heif  # enables HEIC/HEIF via PIL, if installed
+    pillow_heif.register_heif_opener()
+    HEIC_ENABLED = True
+except Exception as e:
+    logging.warning(f"pillow-heif not available ({e}). HEIC uploads will not be accepted.")
+
+
+
+    
 app = Flask(__name__)
 
 # ---- logging (shows up in Render logs) ----
