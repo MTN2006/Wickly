@@ -33,13 +33,11 @@ def predict_argmax(img_path: Path):
     return label, probs_dict
 
 # ---- routes ----
-@app.route('/')
-def home():
-    return render_template('index.html')
-
 @app.route('/home')
 def home():
     return render_template('index.html')
+
+
 
 @app.route('/upload-page')
 def upload_page():
