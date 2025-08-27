@@ -8,6 +8,11 @@ from PIL import Image, ImageOps
 from werkzeug.utils import secure_filename
 from pathlib import Path
 import io, os, uuid
+# pip install fastai pillow pillow-heif
+from fastai.vision.all import *
+from io import BytesIO
+import pillow_heif  # enables HEIC/HEIF via PIL
+pillow_heif.register_heif_opener()
 
 app = Flask(__name__)
 
@@ -37,6 +42,7 @@ def predict_argmax(img_path: Path):
 def home():
     return render_template('index.html')
 
+
 @app.route('/upload-page')
 def upload_page():
     return render_template('upload.html')
@@ -49,75 +55,57 @@ def library():
 def health():
     return jsonify({"ok": True, "vocab": VOCAB})
 
-TARGET_SIZE = (224, 224)  # <-- set to your model’s input size (change if needed)
 
 @app.route('/upload', methods=['POST', 'OPTIONS'])
 def upload():
-    # CORS preflight
     if request.method == 'OPTIONS':
-        response = make_response()
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+        r = make_response()
+        r.headers.add('Access-Control-Allow-Origin', '*')
+        r.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        r.headers.add('Access-Control-Allow-Methods', 'POST')
+        return r
 
-    # Actual POST
-    image = request.files.get('image')
-    app.logger.info(f"content_type={request.content_type}, files={list(request.files.keys())}")
-
-    if not image:
-        response = jsonify({"message": "❌ No image received"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 400
-
-    # ---- NORMALIZE THE IMAGE (fixes phone photos / HEIC / EXIF / RGBA) ----
-    # 1) Sanitize original name for logs only (we'll save as PNG after normalization)
-    orig_name = secure_filename(image.filename or f"upload_{uuid.uuid4().hex}")
+    f = request.files.get('image')
+    if not f:
+        r = jsonify({"message":"❌ No image received"})
+        r.headers.add("Access-Control-Allow-Origin","*")
+        return r, 400
 
     try:
-        # 2) Open from stream (HEIC works if pillow-heif is available)
-        pil = Image.open(image.stream)
-
-        # 3) Fix rotation using EXIF
+        # 1) Load from stream (HEIC works because of pillow-heif)
+        pil = Image.open(f.stream)
+        # 2) Fix EXIF rotation
         pil = ImageOps.exif_transpose(pil)
-
-        # 4) Force 3-channel RGB (avoids RGBA/LA/grayscale issues)
+        # 3) Force 3-channel RGB (removes alpha/LA/gray issues)
         pil = pil.convert("RGB")
 
-        # 5) Resize to model’s expected size (adjust if your model resizes internally)
-        if TARGET_SIZE:
-            pil = pil.resize(TARGET_SIZE, Image.BILINEAR)
+        # ✅ Do NOT resize/normalize here. Let fastai handle it.
+        pred_class, pred_idx, probs = learn.predict(pil)
 
-        # 6) Save as clean PNG to disk (uniform format the model can read)
-        stem = Path(orig_name).stem
-        norm_path = upload_dir / f"{stem}_{uuid.uuid4().hex}.png"
-        pil.save(norm_path, format="PNG", optimize=True)
+        top5 = sorted(
+            [{"label": l, "p": float(p)} for l, p in zip(learn.dls.vocab, probs.tolist())],
+            key=lambda x: x["p"],
+            reverse=True
+        )[:5]
 
-        app.logger.info(f"normalized and saved to {norm_path}")
 
-    except Exception as e:
-        app.logger.exception("Image normalization failed")
-        response = jsonify({"message": f"❌ Image processing error: {str(e)}"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 400
+                # safest way to pick index + confidence
+        topi = int(probs.argmax().item())
 
-    # ---- PREDICT ----
-    try:
-        label, probs = predict_argmax(norm_path)  # your existing API
-        app.logger.info(f"prediction={label}, probs={probs}")
+        r = jsonify({
+            "prediction": str(pred_class),    # e.g. "hammer"
+            "index": topi,                    # e.g. 0
+            "confidence": float(probs[topi]), # e.g. 0.8
+            "top5": top5                      # list of top-5 probs
+        })
+        r.headers.add("Access-Control-Allow-Origin","*")
+        return r, 200
+
     except Exception as e:
         app.logger.exception("Prediction failed")
-        response = jsonify({"message": f"❌ Prediction error: {str(e)}"})
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return response, 500
-
-    # ---- RESPOND ----
-    response = jsonify({
-        "prediction": label,
-        "probabilities": probs
-    })
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 200
+        r = jsonify({"message": f"❌ Prediction error: {e}"})
+        r.headers.add("Access-Control-Allow-Origin","*")
+        return r, 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
