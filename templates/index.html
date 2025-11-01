@@ -1,155 +1,180 @@
-
-
-</div>
-</body>
-</html>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Candlestick Predictor | Home</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- AOS CSS -->
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-  AOS.init();
-</script>
+
 <body class="font-sans bg-gradient-to-r from-zinc-400 to-blue-700 text-white min-h-screen">
 
-  <!-- Main Content-->
-    
-<main>
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
 
+  <!-- NavBar -->
+  <header class="bg-gray-900 text-white shadow-md fixed top-0 left-0 w-full z-50">
+    <div class="w-full flex flex-row justify-between items-center px-6 py-4">
+      <!-- Logo -->
+      <a href="{{ url_for('home') }}" class="text-2xl font-bold text-indigo-400 animate-pulse whitespace-nowrap">
+        Wickly
+      </a>
 
-<section class=" min-h-screen bg-gradient-to-r from-zinc-400 to-blue-700 text-white flex items-center justify-left">
-  <div class="text-center space-y-4">
-    <h1 class="text-4xl font-bold text-indigo-950">Welcome to Wickly</h1>
-    <p class="text-lg">AI-powered pattern detection from your charts</p>
-    <a href="#first">
-      <button class="bg-cyan-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-blue-600 transition duration-300 shadow-lg">
-        Get Started
-      </button>
-    </a>
-  </div>
+      <!-- Navbar -->
+      <nav class="flex space-x-6 text-sm md:text-base">
+        <a href="{{ url_for('library') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Pattern library</a>
+        <a href="{{ url_for('upload_page') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Upload</a>
+        <a href="{{ url_for('detections_page') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Live Charts + Detections</a>
+      </nav>
+    </div>
+  </header>
 
-  
-<!-- NavBar -->
-<header class="bg-gray-900 text-white shadow-md fixed top-0 left-0 w-full z-50">
-  <div class="w-full flex flex-row justify-between items-center px-6 py-4">
-    <!-- Logo -->
-    <a href="/" class="text-2xl font-bold text-indigo-400 animate-pulse whitespace-nowrap">
-      Wickly
-    </a>
+  <main>
 
-    <!-- Navbar -->
-    <nav class="flex space-x-6 text-sm md:text-base">
-      <a href="{{ url_for('library') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Pattern library</a>
-      <a href="{{ url_for('upload_page') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Upload</a>
-    </nav>
-  </div>
-</header>
+      <!-- Hero Section -->
+  <section class="relative min-h-screen bg-gradient-to-r from-zinc-400 to-blue-700 text-white flex flex-col items-center justify-center text-center px-10 pt-24 pb-16 overflow-hidden">
 
+   
+
+    <!-- Overlay for better text contrast -->
+    <div class="absolute inset-0 bg-gradient-to-r from-zinc-400 to-blue-700 z-10"></div>
+
+    <!-- Centered content -->
+    <div class="relative z-20 flex flex-col items-center justify-center space-y-6 max-w-2xl">
+      <h1 class="text-5xl font-bold text-indigo-200 drop-shadow-lg">Welcome to Wickly</h1>
+      <p class="text-lg text-white/90">AI-powered pattern detection for your charts</p>
+      <a href="#first">
+        <button class="bg-cyan-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-blue-600 transition duration-300 shadow-lg">
+          Get Started
+        </button>
+      </a>
+    </div>
+
+  </section>
+
+    <!-- Section 1 -->
+    <section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-45 px-6" id="first">
+      <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-10">
+        <!-- Text Box -->
+        <div
+          class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30"
+          data-aos="fade-right"
+        >
+          <h2 class="text-4xl text-cyan-400 mb-4 font-bold text-center font-sans mb-4">
+            Cross-Platform Pattern Analysis
+          </h2>
+          <p class="text-bold text-center text-red-50">
+            Seamless AI-based candlestick pattern recognition on all devices. Upload images or connect to live data streams
+            to receive real-time insights and predictions from any web browser.
+          </p>
+        </div>
+
+        <!-- Images overlap -->
+        <div class="relative w-full max-w-xl" data-aos="fade-left" data-aos-delay="200">
+          <!-- Background image -->
+          <img
+            src="{{ url_for('static', filename='images/Lib.png') }}"
+            class="w-full rounded shadow-lg relative z-10 border-8 border-gray-700 rounded-lg"
+            data-aos="zoom-in"
+            data-aos-delay="400"
+          />
+          <!-- Overlapping image -->
+          <img
+            src="{{ url_for('static', filename='images/Mobile.png') }}"
+            class="absolute top-20 -left-5 w-32 rounded shadow-lg z-20 border-8 border-gray-700 rounded-lg"
+            data-aos="zoom-in-up"
+            data-aos-delay="400"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-45 px-6 mt-16" id="second">
+      <div class="max-w-7xl mx-auto flex flex-col lg:flex-row-reverse items-center justify-center gap-10">
+        <!-- Text Box -->
+        <div
+          class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30"
+          data-aos="fade-left"
+        >
+          <h2 class="text-4xl text-cyan-400 font-bold text-center font-sans mb-4">
+             What It Does
+          </h2>
+          <p class="text-center text-red-50 font-semibold">
+            Markets are emotional — our AI is not. It scans every uploaded image with precision, detecting subtle signals
+            that most traders miss. Whether you’re new to candlestick analysis or looking to validate your setup, our tool
+            provides unbiased, data-backed predictions to support your next move.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-45 px-6 mt-16" id="third">
+      <div class="max-w-7xl mx-auto flex flex-wrap lg:flex-row-reverse items-center justify-center gap-10">
+        <!-- Text Box -->
+        <div
+          class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30"
+          data-aos="fade-left"
+        >
+          <h2 class="text-4xl text-cyan-400 font-bold text-center font-sans mb-4">
+            Supported Patterns
+          </h2>
+          <p class="text-center text-red-50 font-semibold">
+            From Doji to Morning Star, our system is trained on a broad library of traditional and complex candlestick
+            formations. Whether you’re hunting for momentum breakouts or reversal signs, we’ve got you covered — no
+            manual eyeballing needed.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-24 px-6 flex justify-center items-center" id="fourth">
+      <div
+        class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30"
+        data-aos="fade-left"
+      >
+        <p class="uppercase text-cyan-400 text-sm tracking-widest mb-4">Let's Go</p>
+
+        <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
+          So what are you waiting for?
+        </h2>
+
+        <p class="text-gray-300 text-lg mb-8">
+          Smash that button and start your AI-powered candlestick analysis with confidence.
+        </p>
+
+        <a href="upload-page">
+          <button class="bg-cyan-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-blue-600 transition duration-300 shadow-lg">
+            Upload Now
+          </button>
+        </a>
+      </div>
+    </section>
+
+    <!-- Scrollable spacer section -->
+    <section class="bg-gradient-to-r from-zinc-400 to-blue-700 py-32">
+      <div class="w-full h-[10px] from-black to-blue-700 rounded-lg mx-auto"></div>
+    </section>
+
+  </main>
 
   <!-- Footer -->
-<footer class="bg-black text-sm text-white fixed bottom-0 left-0 w-full py-2 z-50 text-center">
-  Talha @2025 | 
-  <a href="https://www.linkedin.com/in/mohammad-talha-351a2a28b/">Linkedin |</a>
-  <a href="https://github.com/MTN2006">Github</a>
-
-</footer>
-
-</section>
-
-
-<!-- Section 1-->
-<section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-45 px-6" id="first">
-      <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-10 ">
-        <!-- Text Box-->
-        <div class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30" data-aos="fade-right">
-            <h2 class="text-4xl text-cyan-400 mb-4 font-bold text-center font-sans mb-4">Cross-Platform Pattern Analysis</h2>
-            <p class="text-bold text-center text-red-50"> Seamless AI-based candlestick pattern recognition on all devices. Upload images or connect to live data streams to receive real-time insights and predictions from any web browser.
-</p>
-<!-- Images overlap-->
- </div>
-<div class="relative w-full max-w-xl" data-aos="fade-left" data-aos-delay="200">
-      <!-- Background image -->
-      <img src="{{url_for('static', filename='images/Lib.png') }}" class="w-full rounded shadow-lg relative z-10 border-8 border-gray-700 rounded-lg" data-aos="zoom-in"
-        data-aos-delay="400" >
-      <!-- Overlapping Image-->
-      <img src="{{url_for('static', filename='images/Mobile.png') }}" class="absolute top-20 -left-5 w-32 rounded shadow-lg z-20 border-8 border-gray-700 rounded-lg" data-aos="zoom-in-up"
-        data-aos-delay="400" >
-    </div>
-</section>
-
-
-
-
-<!-- Section 2 -->
-<section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-45 px-6 mt-16" id="second">
-  <div class="max-w-7xl mx-auto flex flex-col lg:flex-row-reverse items-center justify-center gap-10">
-
-    <!-- Text Box -->
-    <div class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30" data-aos="fade-left">
-      <h2 class="text-4xl text-cyan-400 font-bold text-center font-sans mb-4">
-        🧩 What It Does
-      </h2>
-      <p class="text-center text-red-50 font-semibold">
-        Markets are emotional — our AI is not. It scans every uploaded image with precision, detecting subtle signals that most traders miss. Whether you’re new to candlestick analysis or looking to validate your setup, our tool provides unbiased, data-backed predictions to support your next move.
-      </p>
-    </div>
-
-
-  </div>
-</section>
-
-
-<!-- section 3 -->
- <section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-45 px-6 mt-16" id="third"> 
-  <div class="max-w-7xl mx-auto flex flex-wrap lg:flex-row-reverse items-center justify-center gap-10">
-    <!-- Text Boxes -->
-<div class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30" data-aos="fade-left">      
-  <h2 class="text-4xl text-cyan-400 font-bold text-center font-sans mb-4">Supported Patterns</h2>
-       <p class="text-center text-red-50 font-semibold">From Doji to Morning Star, our system is trained on a broad library of traditional and complex candlestick formations. Whether you’re hunting for momentum breakouts or reversal signs, we’ve got you covered — no manual eyeballing needed.</p>
-     </div>
-  </div>
- </section>
-
-
-<!-- Section 4 -->
-<section class="scroll-mt-32 bg-gradient-to-r from-zinc-400 to-blue-700 py-24 px-6 flex justify-center items-center" id="fourth">
-  <div class="bg-gradient-to-br from-purple-800 via-blue-900 to-black p-12 rounded-3xl shadow-2xl text-center w-full max-w-4xl border border-blue-400/30" data-aos="fade-left">
-
-    <p class="uppercase text-cyan-400 text-sm tracking-widest mb-4">Let's Go</p>
-    
-    <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
-      So what are you waiting for?
-    </h2>
-
-    <p class="text-gray-300 text-lg mb-8">
-      Smash that button and start your AI-powered candlestick analysis with confidence.
-    </p>
-
-  <a href="upload.html">
-  <button class="bg-cyan-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-blue-600 transition duration-300 shadow-lg">
-    Upload Now
-  </button>
-</a>
-
-  </div>
-</section>
-
-<!-- Scrollable spacer section -->
-<section class="bg-gradient-to-r from-zinc-400 to-blue-700 py-32">
-  <div class="w-full h-[10px] from-black to-blue-700 rounded-lg mx-auto"></div>
-</section>
-
-</main>
-
-
+  <footer class="bg-black text-sm text-white fixed bottom-0 left-0 w-full py-2 z-50 text-center">
+    Talha Muhammad @2025 |
+    <a class="hover:text-cyan-400 underline-offset-2 hover:underline" href="https://www.linkedin.com/in/mohammad-talha-351a2a28b/">LinkedIn</a>
+    |
+    <a class="hover:text-cyan-400 underline-offset-2 hover:underline" href="https://github.com/MTN2006">GitHub</a>
+  </footer>
 
 </body>
-
 </html>

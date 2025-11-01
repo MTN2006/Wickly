@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wickly — Live Detections</title>
+
+  <!-- Tailwind (use your own build if you have it) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HTMX for sidebar partial loading -->
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+
+  <!-- TradingView Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-r from-zinc-400 to-blue-700 text-slate-100">
+  <!-- Fixed Header (same style as your index) -->
+  <header class="bg-gray-900 text-white shadow-md fixed top-0 left-0 w-full z-50">
+    <div class="w-full flex flex-row justify-between items-center px-6 py-4">
+      <!-- Logo -->
+      <a href="{{ url_for('home') }}" class="text-2xl font-bold text-indigo-400 animate-pulse whitespace-nowrap">
+        Wickly
+      </a>
+
+      <!-- Navbar -->
+      <nav class="flex space-x-6 text-sm md:text-base">
+        <a href="{{ url_for('home') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Home</a>
+        <a href="{{ url_for('library') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Pattern library</a>
+        <a href="{{ url_for('upload_page') }}" class="hover:text-cyan-400 hover:underline transition duration-300">Upload</a>
+
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="pt-20 px-4">
+    <div class="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+      <!-- Chart -->
+      <section class="col-span-12 lg:col-span-9">
+        <div class="rounded-2xl bg-slate-900 p-4 shadow border border-slate-800">
+          <div class="flex items-center justify-between mb-3">
+            <h1 class="text-2xl font-bold">Live Chart</h1>
+            <span class="text-xs opacity-70">Lightweight Charts</span>
+          </div>
+
+          <!-- Controls: symbol + timeframe + period -->
+          <div class="flex flex-wrap items-center gap-3 mb-3">
+            <label for="symbol" class="text-sm opacity-80">Symbol</label>
+            <select id="symbol" class="px-2 py-1 rounded bg-slate-800 text-slate-100 text-sm">
+              <!-- Stocks -->
+              <option value="AAPL">AAPL</option>
+              <option value="MSFT">MSFT</option>
+              <option value="GOOGL">GOOGL</option>
+              <option value="AMZN">AMZN</option>
+              <option value="NVDA">NVDA</option>
+              <option value="TSLA">TSLA</option>
+              <option value="META">META</option>
+              <!-- Crypto (yfinance tickers) -->
+              <option value="BTC-USD">BTC-USD</option>
+              <option value="ETH-USD">ETH-USD</option>
+              <option value="SOL-USD">SOL-USD</option>
+            </select>
+
+            <label for="tf" class="text-sm opacity-80">TF</label>
+            <select id="tf" class="px-2 py-1 rounded bg-slate-800 text-slate-100 text-sm">
+              <option>1M</option> 
+              <option>5M</option>
+              <option>15M</option>
+              <option>1H</option>
+              <option selected>1D</option>
+              <option>1W</option>
+              <option>1MO</option>
+            </select>
+
+            <label for="period" class="text-sm opacity-80">Period</label>
+            <select id="period" class="px-2 py-1 rounded bg-slate-800 text-slate-100 text-sm">
+              <option>1H</option>
+              <option>1D</option>
+              <option>1W</option>
+              <option selected>1M</option>
+              <option>1Y</option>
+            </select>
+
+            <button id="apply" class="text-xs px-3 py-1 rounded bg-cyan-600 hover:bg-cyan-500">
+              Apply
+            </button>
+          </div>
+
+          <div id="chart" class="w-full h-[560px]"></div>
+        </div>
+      </section>
+
+      <!-- Detections Sidebar -->
+      <aside class="col-span-12 lg:col-span-3">
+        <div class="rounded-2xl bg-slate-900 p-4 shadow border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Detections</h2>
+            <button
+              class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700"
+              hx-get="/flask/partials/detections"
+              hx-target="#detections"
+              hx-swap="innerHTML">
+              Refresh
+            </button>
+          </div>
+
+          <!-- On page load, HTMX injects the detections list -->
+          <div id="detections"
+               hx-get="/flask/partials/detections"
+               hx-trigger="load"
+               hx-swap="innerHTML">
+            <!-- _detections.html will be injected here -->
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Chart bootstrap (guarded) -->
+  <script src="/static/chart-init.js?v=3"></script>
+</body>
+</html>

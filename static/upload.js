@@ -22,12 +22,12 @@ const ADVICE = {
   "Inverted Hammer": "Appears in downtrends; confirmation improves reliability.",
   "Bullish Engulfing": "Momentum shift up; confirm with next close and volume.",
   "Piercing Line": "Potential reversal; watch the next candle.",
-  "Morning Star": "3‑candle reversal; seek confirmation.",
-  "Morning Doji Star": "Indecision mid‑candle; wait for follow‑through.",
+  "Morning Star": "3-candle reversal; seek confirmation.",
+  "Morning Doji Star": "Indecision mid-candle; wait for follow-through.",
   "Three White Soldiers": "Strong momentum; beware overextension.",
   "Bullish Harami": "Possible turn; confirmation helps.",
   "Bullish Harami Cross": "As above with doji; confirm.",
-  "Tweezer Bottom": "Double rejection of lows; monitor follow‑through.",
+  "Tweezer Bottom": "Double rejection of lows; monitor follow-through.",
   "Rising Three Methods": "Continuation; trend context matters.",
   "Bullish Tasuki Gap": "Continuation; gap support is key.",
   "Side-by-Side White Lines (Bullish)": "Continuation; confirm trend.",
@@ -35,7 +35,7 @@ const ADVICE = {
   "Bullish Kicking": "Strong shift; verify with volume/gap.",
   "Shooting Star": "After uptrend; look for a lower close.",
   "Bearish Engulfing": "Momentum down; confirm below support.",
-  "Evening Star": "3‑candle reversal; confirm.",
+  "Evening Star": "3-candle reversal; confirm.",
   "Tweezer Top": "Repeated rejection of highs; watch breakdown."
 };
 
@@ -147,7 +147,12 @@ fileInput.addEventListener("change", async () => {
   formData.append('image', file);
 
   try {
-    const response = await fetch("https://wickly.onrender.com/upload", {
+    // ✨ changed: figure out if we're under /flask (Uvicorn) or root (plain Flask)
+    const basePath = window.location.pathname.startsWith('/flask')
+      ? '/flask'
+      : '';
+
+    const response = await fetch(`${basePath}/upload`, {   // ✨ changed
       method: "POST",
       body: formData,
     });
@@ -160,15 +165,28 @@ fileInput.addEventListener("change", async () => {
 
     // Keep your fallback text output (optional)
     const predLabel = data.prediction;
-    const predProb = data.probabilities?.[predLabel] ?? null;
+    // your backend returns {prediction, confidence, top5}
+    // not `probabilities`, so we grab confidence as prob:
+    const predProb = data.confidence ?? null;
+
     result.style.display = 'block';
     result.style.whiteSpace = 'pre-wrap';
     result.innerHTML = predLabel
-      ? `<strong>Prediction:</strong> ${predLabel}${predProb != null ? ` (${(predProb*100).toFixed(1)}% confident)` : ''}`
+      ? `<strong>Prediction:</strong> ${predLabel}${predProb != null ? ` (${(predProb*100).toFixed(2)} confidence)` : ''}`
       : `<strong>Scanned.</strong>`;
 
-    // NEW: one popup per detected pattern
-    const patterns = extractPatterns(data);
+    // Build patterns list for popups using your response shape.
+    // We'll adapt it so extractPatterns() still works nicely.
+    const syntheticData = {
+      prediction: data.prediction,
+      probabilities: data.top5
+        ? Object.fromEntries(
+            data.top5.map(item => [item.label, item.p])
+          )
+        : undefined
+    };
+
+    const patterns = extractPatterns(syntheticData);
     showPopups(patterns);
 
   } catch (err) {
