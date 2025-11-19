@@ -40,4 +40,4 @@ aiosqlite
 # Logging
 structlog
 
-TA-Lib==0.4.28
+TA-Lib==0.5.0
