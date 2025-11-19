@@ -44,6 +44,8 @@ _DETS_CACHE: dict[tuple[str,str,str], dict] = {}  # (ticker,tf,look) -> {last_ti
 def _bars_last_time(bars: list[dict]) -> int:
     return int(bars[-1]["time"]) if bars else 0
 
+
+
 def safe_scan(df: pd.DataFrame, *, min_abs: int = 20, max_bars: int = 400, top_k: int = 50) -> list[dict]:
     try:
         if df is None or df.empty:
