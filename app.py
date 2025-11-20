@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.wsgi import WSGIMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 
 # -------------------- Env --------------------
 from dotenv import load_dotenv
@@ -39,11 +39,11 @@ except Exception as e:
 from functools import lru_cache
 import time
 
-_DETS_CACHE: dict[tuple[str,str,str], dict] = {}  # (ticker,tf,look) -> {last_time:int, dets:list, ts:float}
+_DETS_CACHE: dict[tuple[str, str, str], dict] = {}  # (ticker,tf,look) -> {last_time:int, dets:list, ts:float}
+
 
 def _bars_last_time(bars: list[dict]) -> int:
     return int(bars[-1]["time"]) if bars else 0
-
 
 
 def safe_scan(df: pd.DataFrame, *, min_abs: int = 20, max_bars: int = 400, top_k: int = 50) -> list[dict]:
@@ -78,6 +78,7 @@ def safe_scan(df: pd.DataFrame, *, min_abs: int = 20, max_bars: int = 400, top_k
         logging.warning(f"safe_scan failed: {e}")
         return []
 
+
 # -------------------- FastAPI app (ASGI) --------------------
 app = FastAPI(title="Wickly API", version="0.2.0")
 
@@ -87,11 +88,22 @@ templates = Jinja2Templates(directory="templates")
 
 # include routers (keep your existing routers)
 from wicklyu.routers import detections  # noqa: E402
+
 app.include_router(detections.router)
 
-@app.get("/")
-def root():
-    return {"msg": "Hello Wickly"}
+
+# 🚨 NEW: make the ASGI root redirect to the Flask UI
+@app.get("/", include_in_schema=False)
+async def root():
+    # When someone hits the bare domain, send them to the Flask home page
+    return RedirectResponse(url="/flask/")
+
+
+# optional: /home → same place (nice for SEO / bookmarks)
+@app.get("/home", include_in_schema=False)
+async def home_redirect():
+    return RedirectResponse(url="/flask/")
+
 
 # -------------------- fastai (only import what you use) --------------------
 from fastai.vision.all import load_learner  # noqa: E402
@@ -100,6 +112,7 @@ from fastai.vision.all import load_learner  # noqa: E402
 HEIC_ENABLED = False
 try:
     import pillow_heif  # enables HEIC/HEIF via PIL, if installed
+
     pillow_heif.register_heif_opener()
     HEIC_ENABLED = True
 except Exception as e:
@@ -118,8 +131,9 @@ upload_dir = Path("uploads")
 upload_dir.mkdir(exist_ok=True)
 
 # Force CPU on Render
-learn = load_learner(model_path, cpu=True)   # <— keeps CPU
-VOCAB = list(learn.dls.vocab)                # e.g. ['hammer','none']
+learn = load_learner(model_path, cpu=True)  # <— keeps CPU
+VOCAB = list(learn.dls.vocab)  # e.g. ['hammer','none']
+
 
 def predict_argmax(img_path: Path):
     _, _, probs = learn.predict(img_path)
@@ -128,6 +142,7 @@ def predict_argmax(img_path: Path):
     probs_dict = {VOCAB[i]: float(probs[i]) for i in range(len(VOCAB))}
     return label, probs_dict
 
+
 # ===================== OHLC via Alpaca (primary) + yfinance + Stooq (fallbacks) =====================
 
 ALPACA_KEY = os.environ.get("ALPACA_API_KEY_ID")
@@ -135,13 +150,13 @@ ALPACA_SEC = os.environ.get("ALPACA_API_SECRET_KEY")
 
 # UI TFs -> Alpaca API timeframe strings
 _TF_TO_ALPACA = {
-    "5M":  "5Min",
+    "5M": "5Min",
     "15M": "15Min",
-    "1H":  "1Hour",
-    "1D":  "1Day",
-    "1W":  "1Week",
+    "1H": "1Hour",
+    "1D": "1Day",
+    "1W": "1Week",
     "1MO": "1Month",
-    "1M":  "1Min",
+    "1M": "1Min",
 }
 
 # UI TFs -> yfinance intervals (fallbacks keep your existing behavior)
@@ -155,21 +170,30 @@ TF_TO_INTERVAL = {
     "1M": "1m",
 }
 
+
 def _period_to_delta(p: str) -> timedelta:
     p = (p or "").lower()
-    if p in ("1h",):        return timedelta(hours=1)
-    if p in ("1d","1day"):  return timedelta(days=1)
-    if p in ("7d","1w"):    return timedelta(days=7)
-    if p in ("1m","1mo"):   return timedelta(days=30)
-    if p in ("1y",):        return timedelta(days=365)
+    if p in ("1h",):
+        return timedelta(hours=1)
+    if p in ("1d", "1day"):
+        return timedelta(days=1)
+    if p in ("7d", "1w"):
+        return timedelta(days=7)
+    if p in ("1m", "1mo"):
+        return timedelta(days=30)
+    if p in ("1y",):
+        return timedelta(days=365)
     return timedelta(days=30)
+
 
 def _is_crypto_symbol(sym: str) -> bool:
     s = (sym or "").upper()
     return s.endswith("-USD") or s.endswith("-USDT") or "/" in s
 
+
 def _to_alpaca_crypto_symbol(sym: str) -> str:
     return sym.upper().replace("-", "/")
+
 
 async def _alpaca_fetch(symbol: str, tf: str, lookback: str, limit: int = 1000) -> list[dict]:
     tf_api = _TF_TO_ALPACA.get(tf.upper())
@@ -184,7 +208,6 @@ async def _alpaca_fetch(symbol: str, tf: str, lookback: str, limit: int = 1000) 
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            # ...inside _alpaca_fetch()
 
             if _is_crypto_symbol(symbol):
                 alp_sym = _to_alpaca_crypto_symbol(symbol)
@@ -198,20 +221,23 @@ async def _alpaca_fetch(symbol: str, tf: str, lookback: str, limit: int = 1000) 
                 }
                 r = await client.get(url, params=params, headers=headers)
                 if r.status_code != 200:
-                    flask_app.logger.warning(f"[alpaca-crypto] {symbol} {tf_api} -> {r.status_code} {r.text[:200]}")
+                    flask_app.logger.warning(
+                        f"[alpaca-crypto] {symbol} {tf_api} -> {r.status_code} {r.text[:200]}"
+                    )
                     return []
                 js = r.json() or {}
-                # ✅ always default to a list — even if missing
                 series = (js.get("bars", {}) or {}).get(alp_sym, []) or []
                 for b in series:
                     ts = pd.to_datetime(b.get("t"), utc=True)
-                    out.append({
-                        "time": int(ts.value // 10**9),
-                        "open": float(b.get("o")),
-                        "high": float(b.get("h")),
-                        "low":  float(b.get("l")),
-                        "close":float(b.get("c")),
-                    })
+                    out.append(
+                        {
+                            "time": int(ts.value // 10**9),
+                            "open": float(b.get("o")),
+                            "high": float(b.get("h")),
+                            "low": float(b.get("l")),
+                            "close": float(b.get("c")),
+                        }
+                    )
 
             else:
                 url = f"https://data.alpaca.markets/v2/stocks/{symbol}/bars"
@@ -224,43 +250,55 @@ async def _alpaca_fetch(symbol: str, tf: str, lookback: str, limit: int = 1000) 
                 }
                 r = await client.get(url, params=params, headers=headers)
                 if r.status_code != 200:
-                    flask_app.logger.warning(f"[alpaca-stock] {symbol} {tf_api} -> {r.status_code} {r.text[:200]}")
+                    flask_app.logger.warning(
+                        f"[alpaca-stock] {symbol} {tf_api} -> {r.status_code} {r.text[:200]}"
+                    )
                     return []
                 js = r.json() or {}
-                # ✅ same here
                 series = js.get("bars", []) or []
                 for b in series:
                     ts = pd.to_datetime(b.get("t"), utc=True)
-                    out.append({
-                        "time": int(ts.value // 10**9),
-                        "open": float(b.get("o")),
-                        "high": float(b.get("h")),
-                        "low":  float(b.get("l")),
-                        "close":float(b.get("c")),
-                    })
+                    out.append(
+                        {
+                            "time": int(ts.value // 10**9),
+                            "open": float(b.get("o")),
+                            "high": float(b.get("h")),
+                            "low": float(b.get("l")),
+                            "close": float(b.get("c")),
+                        }
+                    )
     except Exception as e:
         flask_app.logger.exception(f"[alpaca] fetch error for {symbol} {tf_api}: {e}")
         return []
 
-    # ---- PATCH: ensure ascending time (some feeds may return unsorted) ----
     out.sort(key=lambda x: x["time"])
     return out
+
 
 def _normalize_lookback_for_interval(interval: str, lookback: str) -> str:
     interval = (interval or "").lower()
     lb = (lookback or "").lower()
 
     if interval == "1m":
-        return {"1h":"1d", "1d":"1d", "7d":"7d", "1w":"7d", "1m":"7d", "1mo":"7d"}.get(lb, "7d")
+        return {"1h": "1d", "1d": "1d", "7d": "7d", "1w": "7d", "1m": "7d", "1mo": "7d"}.get(lb, "7d")
     if interval in ("5m", "15m"):
-        return {"1d":"1d", "7d":"7d", "1w":"7d", "1m":"30d", "1mo":"30d", "1y":"60d"}.get(lb, "60d")
+        return {"1d": "1d", "7d": "7d", "1w": "7d", "1m": "30d", "1mo": "30d", "1y": "60d"}.get(lb, "60d")
     if interval == "1h":
-        return {"1d":"1d", "7d":"7d", "1w":"7d", "1m":"30d", "1mo":"30d", "1y":"1y", "2y":"2y"}.get(lb, "1y")
+        return {
+            "1d": "1d",
+            "7d": "7d",
+            "1w": "7d",
+            "1m": "30d",
+            "1mo": "30d",
+            "1y": "1y",
+            "2y": "2y",
+        }.get(lb, "1y")
     if interval == "1wk":
         return "3mo" if lb in ("1d", "7d", "1w", "1mo") else (lb or "3mo")
     if interval == "1mo":
         return "6mo" if lb in ("1d", "7d", "1w", "1mo") else (lb or "6mo")
     return lb or "1mo"
+
 
 def _bars_from_df(df: pd.DataFrame) -> list[dict]:
     if df is None or df.empty:
@@ -277,13 +315,16 @@ def _bars_from_df(df: pd.DataFrame) -> list[dict]:
             df[c] = df[c.lower()]
     df = df.dropna(subset=["Open", "High", "Low", "Close"])
     return [
-        {"time": int(r["time"]),
-         "open": float(r["Open"]),
-         "high": float(r["High"]),
-         "low":  float(r["Low"]),
-         "close":float(r["Close"])}
+        {
+            "time": int(r["time"]),
+            "open": float(r["Open"]),
+            "high": float(r["High"]),
+            "low": float(r["Low"]),
+            "close": float(r["Close"]),
+        }
         for _, r in df.iterrows()
     ]
+
 
 def _stooq_daily(ticker: str, lookback: str = "1mo") -> list[dict]:
     def try_one(sym: str) -> pd.DataFrame | None:
@@ -304,6 +345,7 @@ def _stooq_daily(ticker: str, lookback: str = "1mo") -> list[dict]:
     df["Date"] = pd.to_datetime(df["Date"], utc=True)
     df = df.sort_values("Date").tail(ndays)
     return _bars_from_df(df)
+
 
 def fetch_bars_yf(ticker: str, tf: str = "1D", lookback: str = "1mo") -> list[dict]:
     if ALPACA_KEY and ALPACA_SEC:
@@ -336,7 +378,9 @@ def fetch_bars_yf(ticker: str, tf: str = "1D", lookback: str = "1mo") -> list[di
             f"[yf.download] EMPTY for {ticker} interval={interval} period={lookback_norm} shape={getattr(df,'shape',None)}"
         )
     except Exception as e:
-        flask_app.logger.exception(f"[yf.download] failed for {ticker} interval={interval} period={lookback_norm}: {e}")
+        flask_app.logger.exception(
+            f"[yf.download] failed for {ticker} interval={interval} period={lookback_norm}: {e}"
+        )
 
     try:
         t = yf.Ticker(ticker)
@@ -348,44 +392,54 @@ def fetch_bars_yf(ticker: str, tf: str = "1D", lookback: str = "1mo") -> list[di
             f"[ticker.history] EMPTY for {ticker} interval={interval} period={lookback_norm} shape={getattr(df,'shape',None)}"
         )
     except Exception as e:
-        flask_app.logger.exception(f"[ticker.history] failed for {ticker} interval={interval} period={lookback_norm}: {e}")
+        flask_app.logger.exception(
+            f"[ticker.history] failed for {ticker} interval={interval} period={lookback_norm}: {e}"
+        )
 
     if tf.upper() == "1D":
         stooq = _stooq_daily(ticker, lookback=lookback)
         if stooq:
-            flask_app.logger.info(f"[stooq] used fallback for {ticker} {lookback} -> {len(stooq)} bars")
+            flask_app.logger.info(
+                f"[stooq] used fallback for {ticker} {lookback} -> {len(stooq)} bars"
+            )
             return stooq
 
     flask_app.logger.error(f"NO DATA for {ticker} tf={tf} lookback={lookback}. Returning [].")
     return []
 
-# -------------------- Flask pages (unchanged) --------------------
+
+# -------------------- Flask pages --------------------
 @flask_app.get("/detections")
 def detections_page():
     return render_template("detections.html")
+
 
 @flask_app.route("/")
 def home():
     return render_template("index.html")
 
+
 @flask_app.route("/upload-page")
 def upload_page():
     return render_template("upload.html")
+
 
 @flask_app.route("/library")
 def library():
     return render_template("library.html")
 
+
 @flask_app.route("/health")
 def health():
     return jsonify({"ok": True, "vocab": VOCAB})
+
 
 # -------------------- Flask API --------------------
 @flask_app.get("/api/bars")
 def api_bars_flask():
     ticker = request.args.get("ticker", "AAPL").upper()
-    tf     = request.args.get("tf", "1D").upper()
-    look   = request.args.get("lookback", "1mo")
+    tf = request.args.get("tf", "1D").upper()
+    look = request.args.get("lookback", "1mo")
 
     bars = fetch_bars_yf(ticker, tf, look)
 
@@ -404,42 +458,37 @@ def api_bars_flask():
     resp.headers["Expires"] = "0"
     return resp
 
+
 @flask_app.get("/api/markers")
 def api_markers_flask():
-    # Explicitly empty—no chart markers.
     resp = jsonify([])
     resp.headers["Cache-Control"] = "no-store, max-age=0, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
     return resp
 
+
 @flask_app.get("/api/detections")
 def api_detections_flask():
-    """
-    Returns TA-Lib detections for the same bars the chart uses.
-    Schema: [{pattern, name, dir, value, time, index}]
-    Robust: never 500s, uses caching so we don't rescan if the last bar hasn't changed.
-    """
     ticker = request.args.get("ticker", "AAPL").upper()
-    tf     = request.args.get("tf", "1D").upper()
-    look   = request.args.get("lookback", "1mo")
+    tf = request.args.get("tf", "1D").upper()
+    look = request.args.get("lookback", "1mo")
 
-    # 1) get bars (already resilient)
     bars = fetch_bars_yf(ticker, tf, look)
     if not bars:
         resp = jsonify([])
         resp.headers["Cache-Control"] = "no-store, max-age=0, must-revalidate"
         return resp
 
-    # 2) cache: only rescan if last bar changed (avoids “one detection every poll” feeling)
     key = (ticker, tf, look)
     last_time = _bars_last_time(bars)
     cached = _DETS_CACHE.get(key)
     if cached and cached.get("last_time") == last_time:
         dets = cached.get("dets", [])
     else:
-        # 3) scan safely (no unsupported kwargs)
-        df = pd.DataFrame(bars).rename(columns={"open":"Open","high":"High","low":"Low","close":"Close"})
+        df = pd.DataFrame(bars).rename(
+            columns={"open": "Open", "high": "High", "low": "Low", "close": "Close"}
+        )
         dets = safe_scan(df, min_abs=80, max_bars=400, top_k=50)
         _DETS_CACHE[key] = {"last_time": last_time, "dets": dets, "ts": time.time()}
 
@@ -449,12 +498,13 @@ def api_detections_flask():
     resp.headers["Expires"] = "0"
     return resp
 
+
 @flask_app.get("/partials/detections")
 def partials_detections_flask():
-    # Keeping this as an inert endpoint (chart JS fills the sidebar).
     return ""
 
-# -------------------- Upload endpoint (unchanged) --------------------
+
+# -------------------- Upload endpoint --------------------
 @flask_app.route("/upload", methods=["POST", "OPTIONS"])
 def upload():
     if request.method == "OPTIONS":
@@ -479,16 +529,18 @@ def upload():
         top5 = sorted(
             [{"label": l, "p": float(p)} for l, p in zip(learn.dls.vocab, probs.tolist())],
             key=lambda x: x["p"],
-            reverse=True
+            reverse=True,
         )[:5]
         topi = int(probs.argmax().item())
 
-        r = jsonify({
-            "prediction": str(pred_class),
-            "index": topi,
-            "confidence": float(probs[topi]),
-            "top5": top5
-        })
+        r = jsonify(
+            {
+                "prediction": str(pred_class),
+                "index": topi,
+                "confidence": float(probs[topi]),
+                "top5": top5,
+            }
+        )
         r.headers.add("Access-Control-Allow-Origin", "*")
         return r, 200
 
@@ -498,31 +550,41 @@ def upload():
         r.headers.add("Access-Control-Allow-Origin", "*")
         return r, 500
 
+
 # ---- Mount Flask under /flask so Uvicorn (ASGI) can serve it ----
 app.mount("/flask", WSGIMiddleware(flask_app))
 
-# -------------------- FastAPI mirrors (no dangling references) --------------------
+
+# -------------------- FastAPI mirrors --------------------
 @app.get("/api/bars")
 def api_bars_fastapi():
-    ticker = "AAPL"; tf = "1D"; look = "1mo"
+    ticker = "AAPL"
+    tf = "1D"
+    look = "1mo"
     bars = fetch_bars_yf(ticker, tf, look)
     return JSONResponse(bars)
+
 
 @app.get("/api/markers")
 def api_markers_fastapi():
     return JSONResponse([])
 
+
 @app.get("/api/detections")
 def api_detections_fastapi():
-    # mirror convenience; uses same default args
-    ticker = "AAPL"; tf = "1D"; look = "1mo"
+    ticker = "AAPL"
+    tf = "1D"
+    look = "1mo"
     bars = fetch_bars_yf(ticker, tf, look)
     if not bars:
         return JSONResponse([])
-    df = pd.DataFrame(bars).rename(columns={"open":"Open","high":"High","low":"Low","close":"Close"})
+    df = pd.DataFrame(bars).rename(
+        columns={"open": "Open", "high": "High", "low": "Low", "close": "Close"}
+    )
     dets = scan_patterns(df, min_abs=20, last_n=400) if HAS_TALIB else []
     dets = dets[:50]
     return JSONResponse(dets)
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
