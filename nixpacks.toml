@@ -1,2 +1,13 @@
-[phases.setup]
-nixPkgs = ["...", "ta-lib"]
+# nixpacks.toml
+
+[phases.install]
+cmds = [
+  # 1) download TA-Lib C library source
+  "wget https://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz",
+  # 2) extract it
+  "tar -xzf ta-lib-0.4.0-src.tar.gz",
+  # 3) build + install it into /usr (where pip expects headers/libs)
+  "cd ta-lib-0.4.0 && ./configure --prefix=/usr && make && make install",
+  # 4) now run the default install commands (this includes `pip install -r requirements.txt`)
+  "..."
+]
