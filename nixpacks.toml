@@ -1,13 +1,17 @@
 # nixpacks.toml
 
+[phases.setup]
+# add wget so our install commands work
+nixPkgs = ["...", "wget"]
+
 [phases.install]
 cmds = [
   # 1) download TA-Lib C library source
   "wget https://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz",
   # 2) extract it
   "tar -xzf ta-lib-0.4.0-src.tar.gz",
-  # 3) build + install it into /usr (where pip expects headers/libs)
+  # 3) build + install it into /usr (headers end up where TA-Lib Python expects them)
   "cd ta-lib-0.4.0 && ./configure --prefix=/usr && make && make install",
-  # 4) now run the default install commands (this includes `pip install -r requirements.txt`)
+  # 4) then run the default install commands (this includes `pip install -r requirements.txt`)
   "..."
 ]
