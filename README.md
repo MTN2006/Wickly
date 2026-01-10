@@ -1,4 +1,4 @@
-# Wickly 📈🕯️ (Single-Developer Project)
+# Wickly 📈🕯️ 
 
 **AI-Powered Candlestick Pattern Recognition & Real-Time Stream Analysis**
 
