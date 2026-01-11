@@ -1,8 +1,8 @@
 # Wickly 📈🕯️ (Single-Developer Project)
 
-**AI-Powered Candlestick Pattern Recognition & Real-Time Stream Analysis**
+**Hybrid AI & Algorithmic Candlestick Pattern Recognition**
 
-**Live Demo:** [Click](https://wickly-production.up.railway.app/flask/)
+**Live Demo:** [Wickly](https://wickly-production.up.railway.app/flask/)
 
 ### Developer
 * **Muhammad Talha** (Computing Science, University of Alberta)
@@ -10,50 +10,36 @@
 ---
 
 ## Inspiration 💡
-Technical analysis is a cornerstone of trading, yet manually identifying patterns across hundreds of charts is time-consuming and prone to human error. Traders often miss critical entry points because they cannot monitor dozens of patterns across multiple timeframes simultaneously. I wanted to explore whether computer vision could be used to measure market sentiment and turn visual candle data into actionable, real-time signals.
+Technical analysis is a cornerstone of trading, yet manually identifying patterns across hundreds of charts is time-consuming and prone to human error. I wanted to build a tool that solves this by combining the "visual intelligence" of AI with the "mathematical precision" of technical indicators. 
 
-That idea became **Wickly**: a project that transforms static financial charts and live data streams into meaningful feedback to help traders understand market movements.
+**Wickly** was created to bridge this gap, using a custom CNN for image-based pattern recognition and the industry-standard TA-Lib for live ticker analysis.
 
 ## What It Does 🤔
-Wickly is a high-performance web application that uses a custom-trained Convolutional Neural Network (CNN) to analyze market data and identify over 30 unique candlestick patterns with high precision.
-
-**The system:**
-* **Streams Live Market Data:** Monitors live data feeds to identify patterns as they form in real-time.
-* **Accepts Image Uploads:** Allows users to upload chart snippets for instant classification.
-* **Identifies 30+ Patterns:** Recognizes complex formations such as "Morning Star," "Hammer," and "Engulfing" patterns.
-* **Delivers Sub-Second Inference:** Optimized REST APIs ensure analysis happens with minimal latency for live trading.
-* **Automated Feature Extraction:** Automatically detects trend reversals and continuation signals without manual input.
+Wickly is a high-performance web application that provides two distinct ways to analyze market data:
+* **AI Image Classification:** Users can upload chart snippets, which are processed by a custom-trained Convolutional Neural Network (CNN) to identify 30+ complex patterns.
+* **Real-Time Algorithmic Detection:** Uses the **TA-Lib** (Technical Analysis Library) to scan live ticker data and identify patterns (like Dojis, Hammers, and Engulfing lines) instantly as they form.
+* **Sub-Second Inference:** Optimized backends ensure that both the AI model and the algorithmic library return results with minimal latency.
+* **Live Patterns Dashboard:** A dedicated section that tracks and displays real-time market signals.
 
 ## How It Works ⚙️
 
-### 1. Data Engineering & CNN Training
-I engineered and trained a custom CNN using **Fastai** on a large-scale dataset of 10,000+ candlestick images. This required labeling and balancing 30+ unique pattern classes. I applied data augmentation techniques to ensure the model remains robust against different chart scales, colors, and resolutions.
+### 1. The AI Engine (Computer Vision)
+I engineered and trained a custom CNN using **Fastai** on a large-scale dataset of 10,000+ candlestick images. This model is specifically used for the "Image Upload" feature, allowing users to get instant AI classification on saved chart screenshots.
 
-### 2. High-Performance API Architecture
-The backend uses a hybrid architecture of **FastAPI** and **Flask**. FastAPI handles the high-concurrency requirements of the live pattern streaming, while Flask manages the core web routing. This dual-framework approach ensures that heavy model inference does not block the user interface.
+### 2. The Real-Time Engine (TA-Lib)
+For live market tickers, I implemented **TA-Lib**. This allows the system to perform high-speed mathematical analysis on live price data. By using a programmatic library for live streams instead of a visual model, the system achieves extreme reliability and speed.
 
+### 3. API & Backend
+The system runs on a hybrid of **FastAPI** and **Flask**. FastAPI handles the high-performance data requests required for the live patterns section, while Flask manages the core web interface and user interactions.
 
-
-### 3. Real-Time Processing Engine
-Unlike standard image classifiers, Wickly includes a dedicated processing layer for live streams. It captures frames from market data feeds, normalizes them into tensors, and runs them through the neural network in a continuous loop, providing "live" detection markers as the market moves.
-
-### 4. Production Pipeline & DevOps
-The entire stack is containerized using **Docker** and deployed on a professional CI/CD pipeline. This ensures that the environment is identical from development to production, preventing "it works on my machine" errors during the heavy model loading phase.
+### 4. Data Layer
+Utilized **SQLite** to architect modular structures for logging detections and managing user alerts, ensuring historical data is accessible for review.
 
 ## Tech Stack 🛠️
 * **Languages:** Python, JavaScript, HTML/CSS, SQLite
-* **ML Frameworks:** Fastai, NumPy, Pandas, PyTorch
-* **Backend:** FastAPI, Flask
+* **Core Libraries:** TA-Lib (Technical Analysis Library), Fastai, PyTorch
+* **Data Processing:** NumPy, Pandas
+* **Backend Frameworks:** FastAPI, Flask
 * **Frontend:** Tailwind CSS, JavaScript
-* **Deployment:** Railway, Render, Docker
+* **Deployment:** Railway, Render
 
-## Getting Started 🚀
-
-### Prerequisites
-* Python 3.9+
-* FastAPI / Flask
-* Fastai & PyTorch
-
-### Installation
-```bash
-pip install fastapi flask fastai numpy pandas torch
